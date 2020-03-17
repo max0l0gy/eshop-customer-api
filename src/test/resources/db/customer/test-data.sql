@@ -1,0 +1,58 @@
+
+insert into customer (
+               id, 
+               address, 
+               city, 
+               country, 
+               email, 
+               fullname, 
+               postcode, 
+               authorities, 
+               date_of_creation, 
+               password, 
+               verifycode, 
+               verified, 
+               shopping_cart_id)
+               values (10,
+               'Address test',
+               'Moscow',
+               'Russia',
+               'test@titsonfire.store',
+               'Maxim V Morev',
+               '111123',
+               'CUSTOMER',
+               '2019-08-25 18:46:23.918',
+               '$2a$10$um0PcvHczmxeUEbR3vCBGuOvtNdgJffm72knavG/EFE7JDm9QBEha',
+               'TKYOC',
+               'f',
+               null);
+
+insert into customer (
+               id,
+               address,
+               city,
+               country,
+               email,
+               fullname,
+               postcode,
+               authorities,
+               date_of_creation,
+               password,
+               verifycode,
+               verified,
+               shopping_cart_id)
+               values (15,
+               'Address : test for error with amount in shopping cart set',
+               'Moscow',
+               'Russia',
+               'test-error@titsonfire.store',
+               'Maxim V Morev',
+               '111123',
+               'CUSTOMER',
+               '2019-08-25 18:46:23.918',
+               '$2a$10$um0PcvHczmxeUEbR3vCBGuOvtNdgJffm72knavG/EFE7JDm9QBEha',
+               'TKYOC',
+               'f',
+               13);
+
+
