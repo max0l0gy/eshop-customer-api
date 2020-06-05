@@ -321,7 +321,7 @@ public class CustomerControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(cv.toString()))
                 .andDo(print())
-                .andExpect(status().is(500))
+                .andExpect(status().is(400))
                 .andExpect(jsonPath("$.message", is("Customer with id 16 not found")));
     }
 
@@ -356,7 +356,7 @@ public class CustomerControllerTest {
     public void findByEmailErrorTest() throws Exception {
         mockMvc.perform(get("/customer/email/test2@titsonfire.store"))
                 .andDo(print())
-                .andExpect(status().is(500))
+                .andExpect(status().is(400))
                 .andExpect(jsonPath("$.message", is("User with test2@titsonfire.store email not found")))
                 .andExpect(jsonPath("$.status", is("error") ));
     }
