@@ -6,9 +6,9 @@ spring:
     name: eshop-customer-api
     profiles:
       active: dev
-    messages:
-      basename: i18n/messages # for multiple properties just use comma separated values
-      encoding: UTF-8
+  messages:
+    basename: i18n/messages # for multiple properties just use comma separated values
+    encoding: UTF-8
   jpa:
     ddl-auto: update
     database-platform: org.hibernate.dialect.PostgreSQL9Dialect
