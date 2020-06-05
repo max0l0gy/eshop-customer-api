@@ -35,7 +35,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Slf4j
-@ActiveProfiles("test")
 @AutoConfigureMockMvc
 @AutoConfigureWireMock(port = 4555)
 @RunWith(SpringRunner.class)

@@ -1,6 +1,5 @@
 package ru.maxmorev.eshop.customer.api.controller;
 
-import com.github.tomakehurst.wiremock.client.WireMock;
 import org.junit.Test;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.runner.RunWith;
@@ -8,10 +7,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.cloud.contract.wiremock.AutoConfigureWireMock;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlConfig;
 import org.springframework.test.context.jdbc.SqlGroup;
@@ -26,26 +23,22 @@ import ru.maxmorev.eshop.customer.api.service.CustomerService;
 
 import java.util.Optional;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
-import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
-import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
-@ActiveProfiles("test")
+@SpringBootTest
 @AutoConfigureMockMvc
-@AutoConfigureWireMock(port = 4555)
+@AutoConfigureWireMock(port = 0)
 @RunWith(SpringRunner.class)
 @DisplayName("Integration controller (CustomerController) test")
-@SpringBootTest
 public class CustomerControllerTest {
 
     @Autowired
@@ -140,9 +133,10 @@ public class CustomerControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(customer.toString()))
                 .andDo(print())
-                .andExpect(status().is(500))
+                .andExpect(status().is(400))
                 .andExpect(jsonPath("$.message", is("Validation error")))
-                .andExpect(jsonPath("$.errors[0].field", is("address")));
+                .andExpect(jsonPath("$.errors[0].field", is("address")))
+                .andExpect(jsonPath("$.errors[0].message", is("Address cannot be empty")));
     }
 
     @Test
@@ -170,7 +164,7 @@ public class CustomerControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(customer.toString()))
                 .andDo(print())
-                .andExpect(status().is(500))
+                .andExpect(status().is(400))
                 .andExpect(jsonPath("$.message", is("Validation error")))
                 .andExpect(jsonPath("$.errors").isArray())
                 .andExpect(jsonPath("$.errors", hasSize(8)))
@@ -203,9 +197,10 @@ public class CustomerControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(customer.toString()))
                 .andDo(print())
-                .andExpect(status().is(500))
+                .andExpect(status().is(400))
                 .andExpect(jsonPath("$.message", is("Validation error")))
-                .andExpect(jsonPath("$.errors[0].field", is("email")));
+                .andExpect(jsonPath("$.errors[0].field", is("email")))
+                .andExpect(jsonPath("$.errors[0].message", is("Invalid email address format")));
     }
 
     @Test
@@ -328,6 +323,60 @@ public class CustomerControllerTest {
                 .andDo(print())
                 .andExpect(status().is(500))
                 .andExpect(jsonPath("$.message", is("Customer with id 16 not found")));
+    }
+
+    @Test
+    @DisplayName("Should expect find customer by email")
+    @SqlGroup({
+            @Sql(value = "classpath:db/customer/test-data.sql",
+                    config = @SqlConfig(encoding = "utf-8", separator = ";", commentPrefix = "--"),
+                    executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD),
+            @Sql(value = "classpath:db/customer/clean-up.sql",
+                    config = @SqlConfig(encoding = "utf-8", separator = ";", commentPrefix = "--"),
+                    executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD),
+    })
+    public void findByEmailTest() throws Exception {
+        mockMvc.perform(get("/customer/email/test@titsonfire.store"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.email", is("test@titsonfire.store")))
+                .andExpect(jsonPath("$.id").isNumber());
+    }
+
+    @Test
+    @DisplayName("Should expect error while find customer by email")
+    @SqlGroup({
+            @Sql(value = "classpath:db/customer/test-data.sql",
+                    config = @SqlConfig(encoding = "utf-8", separator = ";", commentPrefix = "--"),
+                    executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD),
+            @Sql(value = "classpath:db/customer/clean-up.sql",
+                    config = @SqlConfig(encoding = "utf-8", separator = ";", commentPrefix = "--"),
+                    executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD),
+    })
+    public void findByEmailErrorTest() throws Exception {
+        mockMvc.perform(get("/customer/email/test2@titsonfire.store"))
+                .andDo(print())
+                .andExpect(status().is(500))
+                .andExpect(jsonPath("$.message", is("User with test2@titsonfire.store email not found")))
+                .andExpect(jsonPath("$.status", is("error") ));
+    }
+
+    @Test
+    @DisplayName("Should expect find customer by id")
+    @SqlGroup({
+            @Sql(value = "classpath:db/customer/test-data.sql",
+                    config = @SqlConfig(encoding = "utf-8", separator = ";", commentPrefix = "--"),
+                    executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD),
+            @Sql(value = "classpath:db/customer/clean-up.sql",
+                    config = @SqlConfig(encoding = "utf-8", separator = ";", commentPrefix = "--"),
+                    executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD),
+    })
+    public void findByIdTest() throws Exception {
+        mockMvc.perform(get("/customer/id/10"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.email", is("test@titsonfire.store")))
+                .andExpect(jsonPath("$.id").isNumber());
     }
 
 }

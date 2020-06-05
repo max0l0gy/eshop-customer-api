@@ -1,6 +1,5 @@
 package ru.maxmorev.eshop.customer.api.entities;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -37,7 +36,6 @@ public class Customer extends CustomerInfo implements UserDetails {
     @Column(nullable = false, length = 256)
     private String password;
 
-    @JsonIgnore
     @Column(name = "verifycode", nullable = false, length = 256)
     private String verifyCode;
 
@@ -63,8 +61,6 @@ public class Customer extends CustomerInfo implements UserDetails {
         this.authorities = authorities;
     }
 
-    //implementation methods of org.springframework.security.core.userdetails.UserDetails
-    @JsonIgnore
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         Set<CustomerAuthority> authSet = new HashSet<>();
