@@ -77,6 +77,38 @@ public class CustomerControllerTest {
     }
 
     @Test
+    @DisplayName("Should create admin from RequestBody")
+    @SqlGroup({
+            @Sql(value = "classpath:db/customer/clean-up.sql",
+                    config = @SqlConfig(encoding = "utf-8", separator = ";", commentPrefix = "--"),
+                    executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD),
+            @Sql(value = "classpath:db/customer/clean-up.sql",
+                    config = @SqlConfig(encoding = "utf-8", separator = ";", commentPrefix = "--"),
+                    executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
+    })
+    public void createAdminTest() throws Exception {
+        Customer customer = Customer
+                .builder()
+                .email("admin@titsonfire.store")
+                .fullName("Maxim Morev")
+                .address("Test Address")
+                .postcode("111123")
+                .city("Moscow")
+                .country("Russia")
+                .password("helloFreakBitches")
+                .build();
+        mockMvc.perform(post("/admin/")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(customer.toString()))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.email", is("admin@titsonfire.store")))
+                .andExpect(jsonPath("$.authorities[0].authority", is("ADMIN")))
+                .andExpect(jsonPath("$.verified", is(false)))
+                .andExpect(jsonPath("$.id").isNumber());
+    }
+
+    @Test
     @DisplayName("Should except error while create customer from RequestBody")
     @SqlGroup({
             @Sql(value = "classpath:db/customer/test-data.sql",

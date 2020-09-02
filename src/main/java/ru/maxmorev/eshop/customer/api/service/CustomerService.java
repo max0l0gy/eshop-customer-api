@@ -9,7 +9,7 @@ import java.util.Optional;
 public interface CustomerService {
 
     Customer createCustomerAndVerifyByEmail(Customer customer);
-
+    Customer createAdminAndVerifyByEmail(Customer customer);
     void update(Customer customer);
 
     Customer updateInfo(CustomerInfo i);

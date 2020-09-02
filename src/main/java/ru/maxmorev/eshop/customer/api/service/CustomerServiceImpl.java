@@ -54,6 +54,18 @@ public class CustomerServiceImpl implements CustomerService {
         return created;
     }
 
+    @Override
+    public Customer createAdminAndVerifyByEmail(Customer customer) {
+        Customer created = null;
+        checkEmail(customer);
+        customer.setVerifyCode(RandomStringUtils.randomAlphabetic(5));
+        customer.setPassword(bcryptEncoder.encode(customer.getPassword()));
+        customer.addAuthority(AuthorityValues.ADMIN);
+        created = customerRepository.save(customer);
+        em.flush();
+        return created;
+    }
+
     @Transactional(readOnly = true)
     @Override
     public Optional<Customer> findByEmail(String email) {

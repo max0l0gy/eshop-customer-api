@@ -15,7 +15,7 @@ spring:
     show-sql: true
     properties:
      hibernate:
-       dialect: org.hibernate.dialect.PostgreSQL9Dialect
+       dialect: org.hibernate.dialect.H2Dialect
        hbm2ddl.auto: update
        use_sql_comments: true
        format_sql: false
@@ -26,8 +26,8 @@ spring:
          batch_size: 10
          lob.non_contextual_creation: true
   datasource:
-    url: jdbc:postgresql://localhost:5432/eshop-customer
-    driverClassName: org.postgresql.Driver
+    url: jdbc:h2:file:/opt/micro/h2/customer;DB_CLOSE_ON_EXIT=FALSE;AUTO_RECONNECT=TRUE
+    driverClassName: org.h2.Driver
     username: postgres
     password: postgres
 #actuator
@@ -43,6 +43,6 @@ management:
 
 #APP PROPS
 server:
-  port: 8083
+  port: 8080
 
 

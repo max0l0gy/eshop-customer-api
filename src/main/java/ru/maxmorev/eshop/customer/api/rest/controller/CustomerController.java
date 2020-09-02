@@ -37,6 +37,14 @@ public class CustomerController {
         return customerService.createCustomerAndVerifyByEmail(customer);
     }
 
+    @RequestMapping(path = "/admin/", method = RequestMethod.POST)
+    @ResponseBody
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public Customer createAdmin(@RequestBody @Valid Customer customer, Locale locale) {
+        log.info("Customer : {}", customer);
+        return customerService.createAdminAndVerifyByEmail(customer);
+    }
+
     @RequestMapping(path = "/update/", method = RequestMethod.PUT)
     @ResponseBody
     @Transactional(propagation = Propagation.REQUIRES_NEW)
