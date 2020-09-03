@@ -4,14 +4,14 @@ spring:
       enabled: false
   application:
     name: eshop-customer-api
-    profiles:
-      active: dev
+  profiles:
+    active: dev
   messages:
     basename: i18n/messages # for multiple properties just use comma separated values
     encoding: UTF-8
   jpa:
     ddl-auto: update
-    database-platform: org.hibernate.dialect.PostgreSQL9Dialect
+    database-platform: org.hibernate.dialect.H2Dialect
     show-sql: true
     properties:
      hibernate:
