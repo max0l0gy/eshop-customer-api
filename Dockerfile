@@ -5,6 +5,7 @@ RUN mkdir /opt/micro \
 && chown -R 1001 /opt/micro \
 && chmod u=rwx,g=rx /opt/micro \
 && chown -R 1001:root /opt/micro
+
 # Configure the JAVA_OPTIONS, you can add -XshowSettings:vm to also display the heap size.
 WORKDIR /opt/micro
 COPY build/libs/eshop-customer-api-*.jar /opt/micro/app.jar
