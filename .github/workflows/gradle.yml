@@ -40,12 +40,14 @@ jobs:
         token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
 
     - name: Update deployment file
-      run: TAG=0.0.$(echo ${{ github.run_number }} | head -c7) && sed -i 's|maxmorev/eshop-customer-api:latest|maxmorev/eshop-customer-api:'${TAG}'|' $GITHUB_WORKSPACE/eshop-customer-api-deploy.yaml
+      run: TAG=0.0.$(echo ${{ github.run_number }} | head -c7) && sed -i 's|maxmorev/eshop-customer-api:latest|maxmorev/eshop-customer-api:'${TAG}'|' $GITHUB_WORKSPACE/k8s-deployment.yaml
 
     - name: Print image version
-      run: cat $GITHUB_WORKSPACE/eshop-customer-api-deploy.yaml | grep image
+      run: cat $GITHUB_WORKSPACE/k8s-deployment.yaml | grep image
 
     - name: Save DigitalOcean kubeconfig
       run: doctl kubernetes cluster kubeconfig save k8s-eshop
+    - name: Deploy to DigitalOcean Kubernetes perstistent volume claim for stateless micro
+      run: kubectl apply -f $GITHUB_WORKSPACE/k8s-pvc.yaml
     - name: Deploy to DigitalOcean Kubernetes
-      run: kubectl apply -f $GITHUB_WORKSPACE/eshop-customer-api-deploy.yaml
+      run: kubectl apply -f $GITHUB_WORKSPACE/k8s-deployment.yaml
