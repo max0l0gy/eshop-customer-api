@@ -18,13 +18,15 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.maxmorev.eshop.customer.api.annotation.AuthorityValues;
 import ru.maxmorev.eshop.customer.api.entities.Customer;
 import ru.maxmorev.eshop.customer.api.entities.CustomerAuthority;
-import ru.maxmorev.eshop.customer.api.entities.CustomerInfo;
+import ru.maxmorev.eshop.customer.api.rest.response.CustomerDto;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import java.util.Optional;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -57,18 +59,16 @@ public class CustomerServiceTest {
                         .withStatus(HttpStatus.OK.value())
                         .withHeader("Content-Type", "application/json")
                         .withBodyFile("mailSend.ok.json")));
-        Customer customer = Customer
-                .builder()
-                .email("test@titsonfire.store")
-                .fullName("Maxim Morev")
-                .address("Test Address")
-                .authorities(AuthorityValues.ADMIN.name())
-                .postcode("111123")
-                .city("Moscow")
-                .country("Russia")
-                .password("helloFreakBitches")
-                .build();
-        customer = customerService.createCustomerAndVerifyByEmail(customer);
+        Customer customer = new Customer()
+                .setEmail("test@titsonfire.store")
+                .setFullName("Maxim Morev")
+                .setAddress("Test Address")
+                .setAuthorities(AuthorityValues.ADMIN.name())
+                .setPostcode("111123")
+                .setCity("Moscow")
+                .setCountry("Russia")
+                .setPassword("helloFreakBitches");
+        customer = customerService.createCustomerAndVerifyByEmail(CustomerDto.of(customer));
         em.flush();
         log.info("Customer#VerifyCode {}", customer.getVerifyCode());
         log.info("Customer#passwdord {}", customer.getPassword());
@@ -78,21 +78,22 @@ public class CustomerServiceTest {
     }
 
     @Test
-    @DisplayName("should throw exception while create customer couse address is null")
+    @DisplayName("should throw exception while create customer cause address is null")
     @Transactional
     public void testErrorCreateCustomerAndVerifyByEmail() {
-
-        Customer customer = Customer
-                .builder()
-                .email("test@titsonfire.store")
-                .fullName("Maxim Morev")
-                .authorities(AuthorityValues.ADMIN.name())
-                .postcode("111123")
-                .city("Moscow")
-                .country("Russia")
-                .password("helloFreakBitches")
-                .build();
-        assertThrows(javax.validation.ConstraintViolationException.class, () -> customerService.createCustomerAndVerifyByEmail(customer));
+        Customer customer = new Customer()
+                .setEmail("test@titsonfire.store")
+                .setFullName("Maxim Morev")
+                .setAuthorities(AuthorityValues.ADMIN.name())
+                .setPostcode("111123")
+                .setCity("Moscow")
+                .setCountry("Russia")
+                .setPassword("helloFreakBitches");
+        assertThrows(javax.validation.ConstraintViolationException.class, () -> {
+                    customerService.createCustomerAndVerifyByEmail(CustomerDto.of(customer));
+                    em.flush();
+                }
+                );
     }
 
     @Test
@@ -177,39 +178,13 @@ public class CustomerServiceTest {
     public void updateInfoTest() {
         Optional<Customer> customer = customerService.findByEmail("test@titsonfire.store");
         assertTrue(customer.isPresent());
-        Customer c = customer.get();
+        CustomerDto c = CustomerDto.of(customer.get());
         c.setCountry("Canada");
         c.setCity("Toronto");
-        Customer result = customerService.updateInfo((CustomerInfo) c);
+        Customer result = customerService.updateInfo(c);
         em.flush();
         assertEquals("Canada", result.getCountry());
         assertEquals("Toronto", result.getCity());
     }
-
-    @Test
-    @Transactional
-    @DisplayName("should update customer: create shopping cart and set it")
-    @SqlGroup({
-            @Sql(value = "classpath:db/customer/test-data.sql",
-                    executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD),
-            @Sql(value = "classpath:db/customer/clean-up.sql",
-                    config = @SqlConfig(encoding = "utf-8", separator = ";", commentPrefix = "--"),
-                    executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD),
-    })
-    public void updateCustomerTest() {
-        Optional<Customer> customer = customerService.findByEmail("test@titsonfire.store");
-        assertTrue(customer.isPresent());
-
-        Customer c = customer.get();
-        c.setShoppingCartId(100L);
-        customerService.update(c);
-
-        em.flush();
-
-        customer = customerService.findByEmail("test@titsonfire.store");
-        assertEquals(100L, customer.get().getShoppingCartId().longValue());
-
-    }
-
 
 }

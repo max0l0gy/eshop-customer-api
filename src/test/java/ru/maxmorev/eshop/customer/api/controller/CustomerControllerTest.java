@@ -15,15 +15,17 @@ import org.springframework.test.context.jdbc.SqlGroup;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
+import ru.maxmorev.eshop.customer.api.annotation.AuthorityValues;
 import ru.maxmorev.eshop.customer.api.entities.Customer;
-import ru.maxmorev.eshop.customer.api.entities.CustomerInfo;
 import ru.maxmorev.eshop.customer.api.rest.request.CustomerVerify;
-import ru.maxmorev.eshop.customer.api.rest.response.CustomerDTO;
+import ru.maxmorev.eshop.customer.api.rest.response.CustomerDto;
 import ru.maxmorev.eshop.customer.api.service.CustomerService;
 
 import java.util.Optional;
 
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -34,9 +36,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 @SpringBootTest
 @AutoConfigureMockMvc
-@AutoConfigureWireMock(port = 0)
 @RunWith(SpringRunner.class)
 @DisplayName("Integration controller (CustomerController) test")
 public class CustomerControllerTest {
@@ -57,22 +59,32 @@ public class CustomerControllerTest {
                     executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
     })
     public void createCustomerTest() throws Exception {
-        Customer customer = Customer
-                .builder()
-                .email("test@titsonfire.store")
-                .fullName("Maxim Morev")
-                .address("Test Address")
-                .postcode("111123")
-                .city("Moscow")
-                .country("Russia")
-                .password("helloFreakBitches")
-                .build();
+        Customer customer = new Customer()
+                .setEmail("test@titsonfire.store")
+                .setFullName("Maxim Morev")
+                .setAddress("Test Address")
+                .setAuthorities(AuthorityValues.ADMIN.name())
+                .setPostcode("111123")
+                .setCity("Moscow")
+                .setCountry("Russia")
+                .setPassword("helloFreakBitches");
         mockMvc.perform(post("/customer/")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(customer.toString()))
+                .content(CustomerDto.of(customer).toJsonString()))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.email", is("test@titsonfire.store")))
+                .andExpect(jsonPath("$.fullName", is("Maxim Morev")))
+                .andExpect(jsonPath("$.country", is("Russia")))
+                .andExpect(jsonPath("$.postcode", is("111123")))
+                .andExpect(jsonPath("$.city", is("Moscow")))
+                .andExpect(jsonPath("$.address", is("Test Address")))
+                .andExpect(jsonPath("$.password", notNullValue()))
+                .andExpect(jsonPath("$.verifyCode", notNullValue()))
+                .andExpect(jsonPath("$.verified", is(false)))
+                .andExpect(jsonPath("$.shoppingCartId", nullValue()))
+                .andExpect(jsonPath("$.resetPasswordCode", nullValue()))
+                .andExpect(jsonPath("$.authorities[0].authority", is("CUSTOMER")))
                 .andExpect(jsonPath("$.id").isNumber());
     }
 
@@ -87,24 +99,34 @@ public class CustomerControllerTest {
                     executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
     })
     public void createAdminTest() throws Exception {
-        Customer customer = Customer
-                .builder()
-                .email("admin@titsonfire.store")
-                .fullName("Maxim Morev")
-                .address("Test Address")
-                .postcode("111123")
-                .city("Moscow")
-                .country("Russia")
-                .password("helloFreakBitches")
-                .build();
+        Customer customer = new Customer()
+                .setEmail("admin@titsonfire.store")
+                .setFullName("Maxim Morev")
+                .setAddress("Test Address")
+                .setPostcode("111123")
+                .setCity("Moscow")
+                .setCountry("Russia")
+                .setPassword("helloFreakBitches");
+
         mockMvc.perform(post("/admin/")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(customer.toString()))
+                .content(CustomerDto.of(customer).toJsonString()))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.email", is("admin@titsonfire.store")))
                 .andExpect(jsonPath("$.authorities[0].authority", is("ADMIN")))
                 .andExpect(jsonPath("$.verified", is(false)))
+                .andExpect(jsonPath("$.email", is("admin@titsonfire.store")))
+                .andExpect(jsonPath("$.fullName", is("Maxim Morev")))
+                .andExpect(jsonPath("$.country", is("Russia")))
+                .andExpect(jsonPath("$.postcode", is("111123")))
+                .andExpect(jsonPath("$.city", is("Moscow")))
+                .andExpect(jsonPath("$.address", is("Test Address")))
+                .andExpect(jsonPath("$.password", notNullValue()))
+                .andExpect(jsonPath("$.verifyCode", notNullValue()))
+                .andExpect(jsonPath("$.verified", is(false)))
+                .andExpect(jsonPath("$.shoppingCartId", nullValue()))
+                .andExpect(jsonPath("$.resetPasswordCode", nullValue()))
                 .andExpect(jsonPath("$.id").isNumber());
     }
 
@@ -120,19 +142,18 @@ public class CustomerControllerTest {
     })
     public void createCustomerUniqueErrorTest() throws Exception {
         assertTrue(customerService.findByEmail("test@titsonfire.store").isPresent());
-        Customer customer = Customer
-                .builder()
-                .email("test@titsonfire.store")
-                .fullName("Maxim Morev")
-                .address("Test Address")
-                .postcode("111123")
-                .city("Moscow")
-                .country("Russia")
-                .password("helloFreakBitches")
-                .build();
+        Customer customer = new Customer()
+                .setEmail("test@titsonfire.store")
+                .setFullName("Maxim Morev")
+                .setAddress("Test Address")
+                .setPostcode("111123")
+                .setCity("Moscow")
+                .setCountry("Russia")
+                .setPassword("helloFreakBitches");
+
         mockMvc.perform(post("/customer/")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(customer.toString()))
+                .content(CustomerDto.of(customer).toJsonString()))
                 .andDo(print())
                 .andExpect(status().is(500))
                 .andExpect(jsonPath("$.message", is("Internal storage error")));
@@ -151,19 +172,18 @@ public class CustomerControllerTest {
     })
     public void createCustomerValidationErrorTest() throws Exception {
         assertTrue(customerService.findByEmail("test@titsonfire.store").isPresent());
-        Customer customer = Customer
-                .builder()
-                .email("test2@titsonfire.store")
-                .fullName("Maxim Morev")
-                .address("")
-                .postcode("111123")
-                .city("Moscow")
-                .country("Russia")
-                .password("helloFreakBitches")
-                .build();
+        Customer customer = new Customer()
+                .setEmail("test2@titsonfire.store")
+                .setFullName("Maxim Morev")
+                .setAddress("")
+                .setPostcode("111123")
+                .setCity("Moscow")
+                .setCountry("Russia")
+                .setPassword("helloFreakBitches");
+
         mockMvc.perform(post("/customer/")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(customer.toString()))
+                .content(CustomerDto.of(customer).toJsonString()))
                 .andDo(print())
                 .andExpect(status().is(400))
                 .andExpect(jsonPath("$.message", is("Validation error")))
@@ -182,24 +202,23 @@ public class CustomerControllerTest {
                     executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD),
     })
     public void createCustomerValidationErrorFullListTest() throws Exception {
-        Customer customer = Customer
-                .builder()
-                .email("")
-                .fullName("")
-                .address("")
-                .postcode("")
-                .city("")
-                .country("")
-                .password("")
-                .build();
+        Customer customer = new Customer()
+                .setEmail("")
+                .setFullName("")
+                .setAddress("")
+                .setPostcode("")
+                .setCity("")
+                .setCountry("")
+                .setPassword("");
+
         mockMvc.perform(post("/customer/")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(customer.toString()))
+                .content(CustomerDto.of(customer).toJsonString()))
                 .andDo(print())
                 .andExpect(status().is(400))
                 .andExpect(jsonPath("$.message", is("Validation error")))
                 .andExpect(jsonPath("$.errors").isArray())
-                .andExpect(jsonPath("$.errors", hasSize(8)))
+                .andExpect(jsonPath("$.errors", hasSize(7)))
         ;
     }
 
@@ -214,20 +233,18 @@ public class CustomerControllerTest {
                     executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD),
     })
     public void createCustomerEmailValidationErrorTest() throws Exception {
-        //assertTrue(customerService.findByEmail("test@titsonfire.store").isPresent());
-        Customer customer = Customer
-                .builder()
-                .email("notvalid@titsonfire")
-                .fullName("Maxim Morev")
-                .address("Correct Address")
-                .postcode("111123")
-                .city("Moscow")
-                .country("Russia")
-                .password("helloFreakBitches")
-                .build();
+        Customer customer = new Customer()
+                .setEmail("notvalid@titsonfire")
+                .setFullName("Maxim Morev")
+                .setAddress("Email is okay")
+                .setPostcode("111123")
+                .setCity("Moscow")
+                .setCountry("Russia")
+                .setPassword("helloFreakBitches");
+
         mockMvc.perform(post("/customer/")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(customer.toString()))
+                .content(CustomerDto.of(customer).toJsonString()))
                 .andDo(print())
                 .andExpect(status().is(400))
                 .andExpect(jsonPath("$.message", is("Validation error")))
@@ -247,14 +264,14 @@ public class CustomerControllerTest {
     })
     public void updateCustomerTest() throws Exception {
         Optional<Customer> customer = customerService.findByEmail("test@titsonfire.store");
-        CustomerInfo i = customer.get();
+        Customer i = customer.get();
         assertEquals("Russia", i.getCountry());
         assertEquals("Moscow", i.getCity());
         i.setCountry("Canada");
         i.setCity("Toronto");
         mockMvc.perform(put("/update/")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(CustomerDTO.of(i).toString())
+                .content(CustomerDto.of(i).toJsonString())
                 .with(user("test@titsonfire.store")
                         .password("customer")
                         .authorities((GrantedAuthority) () -> "CUSTOMER")))
@@ -264,32 +281,6 @@ public class CustomerControllerTest {
                 .andExpect(jsonPath("$.country", is("Canada")));
 
     }
-
-//    @Test
-//    @DisplayName("Should not update customer info from RequestBody and expected auth error")
-//    @SqlGroup({
-//            @Sql(value = "classpath:db/customer/test-data.sql",
-//                    config = @SqlConfig(encoding = "utf-8", separator = ";", commentPrefix = "--"),
-//                    executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD),
-//            @Sql(value = "classpath:db/customer/clean-up.sql",
-//                    config = @SqlConfig(encoding = "utf-8", separator = ";", commentPrefix = "--"),
-//                    executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD),
-//    })
-//    public void updateCustomerAuthoritiesErrorTest() throws Exception {
-//        Optional<Customer> customer = customerService.findByEmail("test@titsonfire.store");
-//        CustomerInfo i = customer.get();
-//        assertEquals("Russia", i.getCountry());
-//        assertEquals("Moscow", i.getCity());
-//        i.setCountry("Canada");
-//        i.setCity("Toronto");
-//        mockMvc.perform(put("/update/")
-//                .contentType(MediaType.APPLICATION_JSON)
-//                .content(CustomerDTO.of(i).toString()))
-//                .andDo(print())
-//                .andExpect(status().is(500))
-//                .andExpect(jsonPath("$.message", is("Not Authenticated")));
-//
-//    }
 
     @Test
     @DisplayName("Should verify customer from RequestBody")
@@ -390,7 +381,7 @@ public class CustomerControllerTest {
                 .andDo(print())
                 .andExpect(status().is(400))
                 .andExpect(jsonPath("$.message", is("User with test2@titsonfire.store email not found")))
-                .andExpect(jsonPath("$.status", is("error") ));
+                .andExpect(jsonPath("$.status", is("error")));
     }
 
     @Test

@@ -3,7 +3,6 @@ package ru.maxmorev.eshop.customer.api.service;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -13,11 +12,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.maxmorev.eshop.customer.api.annotation.AuthorityValues;
 import ru.maxmorev.eshop.customer.api.entities.Customer;
-import ru.maxmorev.eshop.customer.api.entities.CustomerInfo;
 import ru.maxmorev.eshop.customer.api.repository.CustomerRepository;
+import ru.maxmorev.eshop.customer.api.rest.response.CustomerDto;
 
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
 import java.util.Optional;
 
 @Slf4j
@@ -29,10 +26,8 @@ public class CustomerServiceImpl implements CustomerService {
     private CustomerRepository customerRepository;
     private PasswordEncoder bcryptEncoder;
     private MessageSource messageSource;
-    @PersistenceContext
-    private EntityManager em;
 
-    protected void checkEmail(Customer customer) {
+    protected void checkEmail(CustomerDto customer) {
         findByEmail(customer.getEmail())
                 .ifPresent(c -> new IllegalArgumentException(
                         messageSource.getMessage("customer.error.unique.email",
@@ -42,27 +37,29 @@ public class CustomerServiceImpl implements CustomerService {
     }
 
     @Override
-    public Customer createCustomerAndVerifyByEmail(Customer customer) {
+    @Transactional
+    public Customer createCustomerAndVerifyByEmail(CustomerDto customerToCreate) {
         Customer created = null;
-        checkEmail(customer);
-        customer.setVerifyCode(RandomStringUtils.randomAlphabetic(5));
-        customer.setPassword(bcryptEncoder.encode(customer.getPassword()));
-        customer.removeAllAuthorities();
-        customer.addAuthority(AuthorityValues.CUSTOMER);
-        created = customerRepository.save(customer);
-        em.flush();
+        checkEmail(customerToCreate);
+        Customer fromDto = CustomerDto.from(customerToCreate);
+        fromDto.setVerifyCode(RandomStringUtils.randomAlphabetic(5));
+        fromDto.setPassword(bcryptEncoder.encode(customerToCreate.getPassword()));
+        fromDto.removeAllAuthorities();
+        fromDto.addAuthority(AuthorityValues.CUSTOMER);
+        created = customerRepository.save(fromDto);
         return created;
     }
 
     @Override
-    public Customer createAdminAndVerifyByEmail(Customer customer) {
+    @Transactional
+    public Customer createAdminAndVerifyByEmail(CustomerDto customerToCreate) {
         Customer created = null;
-        checkEmail(customer);
-        customer.setVerifyCode(RandomStringUtils.randomAlphabetic(5));
-        customer.setPassword(bcryptEncoder.encode(customer.getPassword()));
-        customer.addAuthority(AuthorityValues.ADMIN);
-        created = customerRepository.save(customer);
-        em.flush();
+        checkEmail(customerToCreate);
+        Customer fromDto = CustomerDto.from(customerToCreate);
+        fromDto.setVerifyCode(RandomStringUtils.randomAlphabetic(5));
+        fromDto.setPassword(bcryptEncoder.encode(customerToCreate.getPassword()));
+        fromDto.addAuthority(AuthorityValues.ADMIN);
+        created = customerRepository.save(fromDto);
         return created;
     }
 
@@ -73,11 +70,7 @@ public class CustomerServiceImpl implements CustomerService {
     }
 
     @Override
-    public void update(Customer customer) {
-        this.customerRepository.save(customer);
-    }
-
-    @Override
+    @Transactional
     public Optional<Customer> verify(Long customerId, String code) {
         Optional<Customer> c = customerRepository.findById(customerId);
         c.ifPresent(customer -> {
@@ -89,8 +82,8 @@ public class CustomerServiceImpl implements CustomerService {
         return c;
     }
 
-    @Transactional(readOnly = true)
     @Override
+    @Transactional(readOnly = true)
     public Optional<Customer> findById(Long id) {
         return customerRepository.findById(id);
     }
@@ -103,18 +96,27 @@ public class CustomerServiceImpl implements CustomerService {
     }
 
     @Override
-    public Customer updateInfo(CustomerInfo i) {
-        Customer findByEmail = findByEmail(i.getEmail())
+    public Customer updateInfo(CustomerDto customerInfo) {
+        Customer findByEmail = findByEmail(customerInfo.getEmail())
                 .orElseThrow(() -> new IllegalArgumentException(
                         messageSource.getMessage("customer.error.notFound",
-                                new Object[]{i.getEmail()}, LocaleContextHolder.getLocale()))
+                                new Object[]{customerInfo.getEmail()}, LocaleContextHolder.getLocale()))
                 );
-
-        findByEmail.setAddress(i.getAddress());
-        findByEmail.setCity(i.getCity());
-        findByEmail.setPostcode(i.getPostcode());
-        findByEmail.setCountry(i.getCountry());
-        findByEmail.setFullName(i.getFullName());
+        findByEmail.setAddress(customerInfo.getAddress());
+        findByEmail.setCity(customerInfo.getCity());
+        findByEmail.setPostcode(customerInfo.getPostcode());
+        findByEmail.setCountry(customerInfo.getCountry());
+        findByEmail.setFullName(customerInfo.getFullName());
         return customerRepository.save(findByEmail);
+    }
+
+    @Override
+    public Optional<Customer> generateResetPasswordCode(Long customerId) {
+        return Optional.empty();
+    }
+
+    @Override
+    public Optional<Customer> updatePassword(Long customerId, String resetPasswordCode, String password) {
+        return Optional.empty();
     }
 }

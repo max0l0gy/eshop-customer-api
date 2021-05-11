@@ -11,6 +11,7 @@ import javax.validation.constraints.NotNull;
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class CustomerVerify {
+    private static ObjectMapper mapper = new ObjectMapper();
     @NotNull(message = "{validation.customerVerify.id}")
     private Long id;
     @NotBlank(message = "{validation.customerVerify.verifyCode}")
@@ -19,7 +20,6 @@ public class CustomerVerify {
 
     @Override
     public String toString() {
-        ObjectMapper mapper = new ObjectMapper();
         try {
             return mapper.writeValueAsString(this);
         } catch (JsonProcessingException e) {

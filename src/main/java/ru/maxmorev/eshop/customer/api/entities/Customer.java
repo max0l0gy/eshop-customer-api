@@ -4,18 +4,24 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Builder;
+import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.experimental.Accessors;
+import org.hibernate.annotations.Type;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import ru.maxmorev.eshop.customer.api.annotation.AuthorityValues;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
 import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
+import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
 import java.util.Arrays;
 import java.util.Collection;
@@ -23,14 +29,47 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
+import java.util.UUID;
 
-@Getter
-@Setter
+@Data
 @Entity
 @NoArgsConstructor
+@Accessors(chain = true)
 @Table(name = "customer")
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class Customer extends CustomerInfo implements UserDetails {
+public class Customer implements UserDetails {
+
+    private static final String emailRFC2822 = "(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|\"(?:[\\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21\\x23-\\x5b\\x5d-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])*\")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21-\\x5a\\x53-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])+)\\])";
+
+    @Id
+    @GeneratedValue(generator = Constants.ID_GENERATOR_CUSTOMER)
+    @Column(updatable = false)
+    protected Long id;
+
+    @Email(regexp = emailRFC2822, message = "{validation.email.format}")
+    @NotBlank(message = "{validation.customer.email}")
+    @Column(nullable = false, length = 256, unique = true)
+    private String email;
+
+    @NotBlank(message = "{validation.customer.fullName}")
+    @Column(name = "fullname", nullable = false, length = 256)
+    private String fullName;
+
+    @NotBlank(message = "{validation.customer.country}")
+    @Column(nullable = false, length = 256)
+    private String country;
+
+    @NotBlank(message = "{validation.customer.postcode}")
+    @Column(nullable = false, length = 256)
+    private String postcode;
+
+    @NotBlank(message = "{validation.customer.city}")
+    @Column(nullable = false, length = 256)
+    private String city;
+
+    @NotBlank(message = "{validation.customer.address}")
+    @Column(nullable = false, length = 256)
+    private String address;
 
     @NotBlank(message = "{validation.customer.password}")
     @Column(nullable = false, length = 256)
@@ -53,13 +92,9 @@ public class Customer extends CustomerInfo implements UserDetails {
     @Column(name = "authorities", nullable = false)
     private String authorities;
 
-    @Builder
-    public Customer(Long id, @NotBlank(message = "{validation.customer.email}") String email, @NotBlank(message = "{validation.customer.fullName}") String fullName, @NotBlank(message = "{validation.customer.country}") String country, @NotBlank(message = "{validation.customer.postcode}") String postcode, @NotBlank(message = "{validation.customer.city}") String city, @NotBlank(message = "{validation.customer.address}") String address, @NotBlank(message = "{validation.customer.password}") String password, String verifyCode, String authorities) {
-        super(id, email, fullName, country, postcode, city, address);
-        this.password = password;
-        this.verifyCode = verifyCode;
-        this.authorities = authorities;
-    }
+    @Type(type="uuid-char")
+    @Column(name = "reset_password_code")
+    private UUID resetPasswordCode;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -119,23 +154,5 @@ public class Customer extends CustomerInfo implements UserDetails {
         } catch (JsonProcessingException e) {
             return e.getMessage();
         }
-    }
-
-    @Override
-    public boolean equals(Object object) {
-        if (this == object) return true;
-        if (!(object instanceof Customer)) return false;
-        if (!super.equals(object)) return false;
-        Customer customer = (Customer) object;
-        return getPassword().equals(customer.getPassword()) &&
-                java.util.Objects.equals(getVerifyCode(), customer.getVerifyCode()) &&
-                getDateOfCreation().equals(customer.getDateOfCreation()) &&
-                java.util.Objects.equals(getVerified(), customer.getVerified()) &&
-                java.util.Objects.equals(getAuthorities(), customer.getAuthorities());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(super.hashCode(), getPassword(), getVerifyCode(), getDateOfCreation(), getVerified());
     }
 }

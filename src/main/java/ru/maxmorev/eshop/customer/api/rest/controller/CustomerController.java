@@ -13,8 +13,8 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import ru.maxmorev.eshop.customer.api.entities.Customer;
-import ru.maxmorev.eshop.customer.api.entities.CustomerInfo;
 import ru.maxmorev.eshop.customer.api.rest.request.CustomerVerify;
+import ru.maxmorev.eshop.customer.api.rest.response.CustomerDto;
 import ru.maxmorev.eshop.customer.api.service.CustomerService;
 
 import javax.validation.Valid;
@@ -32,26 +32,25 @@ public class CustomerController {
     @RequestMapping(path = "/customer/", method = RequestMethod.POST)
     @ResponseBody
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public Customer createCustomer(@RequestBody @Valid Customer customer, Locale locale) {
+    public CustomerDto createCustomer(@RequestBody @Valid CustomerDto customer, Locale locale) {
         log.info("Customer : {}", customer);
-        return customerService.createCustomerAndVerifyByEmail(customer);
+        return CustomerDto.of(customerService.createCustomerAndVerifyByEmail(customer));
     }
 
     @RequestMapping(path = "/admin/", method = RequestMethod.POST)
     @ResponseBody
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public Customer createAdmin(@RequestBody @Valid Customer customer, Locale locale) {
+    public CustomerDto createAdmin(@RequestBody @Valid CustomerDto customer, Locale locale) {
         log.info("Customer : {}", customer);
-        return customerService.createAdminAndVerifyByEmail(customer);
+        return CustomerDto.of(customerService.createAdminAndVerifyByEmail(customer));
     }
 
     @RequestMapping(path = "/update/", method = RequestMethod.PUT)
     @ResponseBody
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public Customer updateCustomer(@RequestBody @Valid CustomerInfo customer, Locale locale) {
+    public CustomerDto updateCustomer(@RequestBody @Valid CustomerDto customer, Locale locale) {
         log.info("Customer update : {}", customer);
-        Customer findByEmail = customerService.updateInfo(customer);
-        return findByEmail;
+        return CustomerDto.of(customerService.updateInfo(customer));
     }
 
     @RequestMapping(path = "/customer/verify/", method = RequestMethod.POST)
@@ -68,17 +67,19 @@ public class CustomerController {
 
     @RequestMapping(path = "/customer/email/{email}", method = RequestMethod.GET)
     @ResponseBody
-    public Customer findByEmail(@PathVariable(name = "email") String email, Locale locale) {
+    public CustomerDto findByEmail(@PathVariable(name = "email") String email, Locale locale) {
         return customerService
                 .findByEmail(email)
+                .map(CustomerDto::of)
                 .orElseThrow(() -> new UsernameNotFoundException(messageSource.getMessage("customer.error.notFound.email", new Object[]{email}, locale)));
     }
 
     @RequestMapping(path = "/customer/id/{id}", method = RequestMethod.GET)
     @ResponseBody
-    public Customer findById(@PathVariable(name = "id") Long id, Locale locale) {
+    public CustomerDto findById(@PathVariable(name = "id") Long id, Locale locale) {
         return customerService
                 .findById(id)
+                .map(CustomerDto::of)
                 .orElseThrow(() -> new UsernameNotFoundException(messageSource.getMessage("customer.error.notFound.email", new Object[]{id}, locale)));
     }
 
