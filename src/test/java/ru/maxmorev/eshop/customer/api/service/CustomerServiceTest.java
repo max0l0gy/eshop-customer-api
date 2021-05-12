@@ -23,12 +23,15 @@ import ru.maxmorev.eshop.customer.api.rest.response.CustomerDto;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import java.util.Optional;
+import java.util.UUID;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -93,7 +96,7 @@ public class CustomerServiceTest {
                     customerService.createCustomerAndVerifyByEmail(CustomerDto.of(customer));
                     em.flush();
                 }
-                );
+        );
     }
 
     @Test
@@ -186,5 +189,52 @@ public class CustomerServiceTest {
         assertEquals("Canada", result.getCountry());
         assertEquals("Toronto", result.getCity());
     }
+
+    @Test
+    @Transactional
+    @SqlGroup({
+            @Sql(value = "classpath:db/customer/test-data.sql",
+                    config = @SqlConfig(encoding = "utf-8", separator = ";", commentPrefix = "--"),
+                    executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD),
+            @Sql(value = "classpath:db/customer/clean-up.sql",
+                    config = @SqlConfig(encoding = "utf-8", separator = ";", commentPrefix = "--"),
+                    executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD),
+    })
+    public void generateResetPasswordCode() {
+        Optional<Customer> customerBeforeReset = customerService.findById(10L);
+        assertTrue(customerBeforeReset.isPresent());
+        assertNull(customerBeforeReset.get().getResetPasswordCode());
+        Optional<Customer> customerWithResetPassword = customerService.generateResetPasswordCode(10L);
+        assertTrue(customerWithResetPassword.isPresent());
+        assertNotNull(customerWithResetPassword.get().getResetPasswordCode());
+    }
+
+    @Test
+    @Transactional
+    @SqlGroup({
+            @Sql(value = "classpath:db/customer/test-data.sql",
+                    config = @SqlConfig(encoding = "utf-8", separator = ";", commentPrefix = "--"),
+                    executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD),
+            @Sql(value = "classpath:db/customer/clean-up.sql",
+                    config = @SqlConfig(encoding = "utf-8", separator = ";", commentPrefix = "--"),
+                    executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD),
+    })
+    public void updatePassword() {
+        Optional<Customer> customerBeforePasswordUpdate = customerService.findById(15L);
+        assertTrue(customerBeforePasswordUpdate.isPresent());
+        assertNotNull(customerBeforePasswordUpdate.get().getResetPasswordCode());
+        assertEquals("$2a$10$um0PcvHczmxeUEbR3vCBGuOvtNdgJffm72knavG/EFE7JDm9QBEha", customerBeforePasswordUpdate.get().getPassword());
+        Optional<Customer> customerWithUpdatedPassword = customerService
+                .updatePassword(15L,
+                        UUID.fromString("f6d56466-b345-11eb-8529-0242ac130003"),
+                        "newPassword"
+                );
+        assertTrue(customerWithUpdatedPassword.isPresent());
+        assertNull(customerWithUpdatedPassword.get().getResetPasswordCode());
+        assertTrue(
+                customerService.isPasswordMatches("newPassword", customerWithUpdatedPassword.get().getPassword())
+        );
+    }
+
 
 }

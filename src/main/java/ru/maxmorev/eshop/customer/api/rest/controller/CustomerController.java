@@ -6,7 +6,9 @@ import org.springframework.context.MessageSource;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -14,6 +16,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import ru.maxmorev.eshop.customer.api.entities.Customer;
 import ru.maxmorev.eshop.customer.api.rest.request.CustomerVerify;
+import ru.maxmorev.eshop.customer.api.rest.request.UpdatePasswordRequest;
 import ru.maxmorev.eshop.customer.api.rest.response.CustomerDto;
 import ru.maxmorev.eshop.customer.api.service.CustomerService;
 
@@ -81,6 +84,34 @@ public class CustomerController {
                 .findById(id)
                 .map(CustomerDto::of)
                 .orElseThrow(() -> new UsernameNotFoundException(messageSource.getMessage("customer.error.notFound.email", new Object[]{id}, locale)));
+    }
+
+    @GetMapping(path = "/customer/reset-password-code/id/{id}")
+    @ResponseBody
+    public CustomerDto generateResetPasswordCode(@PathVariable(name = "id") Long id, Locale locale) {
+        return customerService
+                .generateResetPasswordCode(id)
+                .map(CustomerDto::of)
+                .orElseThrow(() -> new UsernameNotFoundException(messageSource.getMessage("customer.error.notFound", new Object[]{id}, locale)));
+    }
+
+    @PostMapping(path = "/customer/update-password")
+    @ResponseBody
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public CustomerDto updatePassword(@RequestBody
+                                      @Valid UpdatePasswordRequest updatePasswordRequest,
+                                      Locale locale) {
+        return customerService
+                .updatePassword(
+                        updatePasswordRequest.getCustomerId(),
+                        updatePasswordRequest.getResetPasswordCode(),
+                        updatePasswordRequest.getNewPassword()
+                )
+                .map(CustomerDto::of)
+                .orElseThrow(() -> new UsernameNotFoundException(
+                        messageSource.getMessage("customer.error.notFound",
+                                new Object[]{updatePasswordRequest.getCustomerId()}, locale)
+                ));
     }
 
 }

@@ -5,6 +5,7 @@ import ru.maxmorev.eshop.customer.api.entities.Customer;
 import ru.maxmorev.eshop.customer.api.rest.response.CustomerDto;
 
 import java.util.Optional;
+import java.util.UUID;
 
 public interface CustomerService {
 
@@ -22,6 +23,10 @@ public interface CustomerService {
 
     Optional<Customer> generateResetPasswordCode(Long customerId);
 
-    Optional<Customer> updatePassword(Long customerId, String resetPasswordCode, String password);
+    Optional<Customer> updatePassword(Long customerId, UUID resetPasswordCode, String newPassword);
+
+    Customer encodePassword(Customer customer, String newPassword);
+
+    boolean isPasswordMatches(CharSequence rawPassword, String encodedPassword);
 
 }
