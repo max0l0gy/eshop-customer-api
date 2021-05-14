@@ -201,10 +201,10 @@ public class CustomerServiceTest {
                     executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD),
     })
     public void generateResetPasswordCode() {
-        Optional<Customer> customerBeforeReset = customerService.findById(10L);
+        Optional<Customer> customerBeforeReset = customerService.findByEmail("test@titsonfire.store");
         assertTrue(customerBeforeReset.isPresent());
         assertNull(customerBeforeReset.get().getResetPasswordCode());
-        Optional<Customer> customerWithResetPassword = customerService.generateResetPasswordCode(10L);
+        Optional<Customer> customerWithResetPassword = customerService.generateResetPasswordCode("test@titsonfire.store");
         assertTrue(customerWithResetPassword.isPresent());
         assertNotNull(customerWithResetPassword.get().getResetPasswordCode());
     }

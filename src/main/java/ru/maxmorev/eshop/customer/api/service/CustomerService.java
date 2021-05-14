@@ -21,7 +21,7 @@ public interface CustomerService {
 
     Optional<Customer> verify(Long customerId, String code);
 
-    Optional<Customer> generateResetPasswordCode(Long customerId);
+    Optional<Customer> generateResetPasswordCode(String email);
 
     Optional<Customer> updatePassword(Long customerId, UUID resetPasswordCode, String newPassword);
 

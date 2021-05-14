@@ -113,8 +113,8 @@ public class CustomerServiceImpl implements CustomerService {
 
     @Override
     @Transactional
-    public Optional<Customer> generateResetPasswordCode(Long customerId) {
-        return customerRepository.findById(customerId)
+    public Optional<Customer> generateResetPasswordCode(String email) {
+        return customerRepository.findByEmail(email)
                 .map(customer -> {
                     customer.setResetPasswordCode(UUID.randomUUID());
                     return customerRepository.save(customer);

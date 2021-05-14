@@ -413,7 +413,7 @@ public class CustomerControllerTest {
                     executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD),
     })
     public void generateResetPasswordCode() throws Exception {
-        mockMvc.perform(get("/customer/reset-password-code/id/10"))
+        mockMvc.perform(get("/customer/reset-password-code/email/test@titsonfire.store"))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").isNumber())

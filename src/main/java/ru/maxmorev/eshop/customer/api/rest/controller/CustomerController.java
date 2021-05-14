@@ -86,13 +86,13 @@ public class CustomerController {
                 .orElseThrow(() -> new UsernameNotFoundException(messageSource.getMessage("customer.error.notFound.email", new Object[]{id}, locale)));
     }
 
-    @GetMapping(path = "/customer/reset-password-code/id/{id}")
+    @GetMapping(path = "/customer/reset-password-code/email/{email}")
     @ResponseBody
-    public CustomerDto generateResetPasswordCode(@PathVariable(name = "id") Long id, Locale locale) {
+    public CustomerDto generateResetPasswordCode(@PathVariable(name = "email") String email, Locale locale) {
         return customerService
-                .generateResetPasswordCode(id)
+                .generateResetPasswordCode(email)
                 .map(CustomerDto::of)
-                .orElseThrow(() -> new UsernameNotFoundException(messageSource.getMessage("customer.error.notFound", new Object[]{id}, locale)));
+                .orElseThrow(() -> new UsernameNotFoundException(messageSource.getMessage("customer.error.notFound", new Object[]{email}, locale)));
     }
 
     @PostMapping(path = "/customer/update-password")
