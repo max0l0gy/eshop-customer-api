@@ -6,7 +6,6 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.cloud.contract.wiremock.AutoConfigureWireMock;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.test.context.jdbc.Sql;
@@ -18,10 +17,12 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.maxmorev.eshop.customer.api.annotation.AuthorityValues;
 import ru.maxmorev.eshop.customer.api.entities.Customer;
 import ru.maxmorev.eshop.customer.api.rest.request.CustomerVerify;
+import ru.maxmorev.eshop.customer.api.rest.request.UpdatePasswordRequest;
 import ru.maxmorev.eshop.customer.api.rest.response.CustomerDto;
 import ru.maxmorev.eshop.customer.api.service.CustomerService;
 
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
@@ -298,7 +299,7 @@ public class CustomerControllerTest {
         cv.setVerifyCode("TKYOC");
         mockMvc.perform(post("/customer/verify/")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(cv.toString()))
+                .content(cv.toJsonString()))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.verified", is(true)));
@@ -320,7 +321,7 @@ public class CustomerControllerTest {
         cv.setVerifyCode("FAILy");//incorrect verify code
         mockMvc.perform(post("/customer/verify/")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(cv.toString()))
+                .content(cv.toJsonString()))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.verified", is(false)));
@@ -342,7 +343,7 @@ public class CustomerControllerTest {
         cv.setVerifyCode("FAILy");//incorrect verify code
         mockMvc.perform(post("/customer/verify/")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(cv.toString()))
+                .content(cv.toJsonString()))
                 .andDo(print())
                 .andExpect(status().is(400))
                 .andExpect(jsonPath("$.message", is("Customer with id 16 not found")));
@@ -401,5 +402,50 @@ public class CustomerControllerTest {
                 .andExpect(jsonPath("$.email", is("test@titsonfire.store")))
                 .andExpect(jsonPath("$.id").isNumber());
     }
+
+    @Test
+    @SqlGroup({
+            @Sql(value = "classpath:db/customer/test-data.sql",
+                    config = @SqlConfig(encoding = "utf-8", separator = ";", commentPrefix = "--"),
+                    executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD),
+            @Sql(value = "classpath:db/customer/clean-up.sql",
+                    config = @SqlConfig(encoding = "utf-8", separator = ";", commentPrefix = "--"),
+                    executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD),
+    })
+    public void generateResetPasswordCode() throws Exception {
+        mockMvc.perform(get("/customer/reset-password-code/email/test@titsonfire.store"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").isNumber())
+                .andExpect(jsonPath("$.resetPasswordCode", notNullValue()))
+        ;
+    }
+
+    @Test
+    @SqlGroup({
+            @Sql(value = "classpath:db/customer/test-data.sql",
+                    config = @SqlConfig(encoding = "utf-8", separator = ";", commentPrefix = "--"),
+                    executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD),
+            @Sql(value = "classpath:db/customer/clean-up.sql",
+                    config = @SqlConfig(encoding = "utf-8", separator = ";", commentPrefix = "--"),
+                    executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD),
+    })
+    public void updatePassword() throws Exception {
+        UpdatePasswordRequest updatePasswordRequest = new UpdatePasswordRequest()
+                .setNewPassword("newPassword")
+                .setCustomerId(15L)
+                .setResetPasswordCode(UUID.fromString("f6d56466-b345-11eb-8529-0242ac130003"));
+        mockMvc.perform(post("/customer/update-password")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(updatePasswordRequest.toJsonString()))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").isNumber())
+                .andExpect(jsonPath("$.resetPasswordCode", nullValue()))
+                .andExpect(jsonPath("$.password", notNullValue()))
+
+        ;
+    }
+
 
 }

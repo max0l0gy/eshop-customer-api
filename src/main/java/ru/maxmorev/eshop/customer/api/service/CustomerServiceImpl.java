@@ -16,6 +16,7 @@ import ru.maxmorev.eshop.customer.api.repository.CustomerRepository;
 import ru.maxmorev.eshop.customer.api.rest.response.CustomerDto;
 
 import java.util.Optional;
+import java.util.UUID;
 
 @Slf4j
 @Transactional
@@ -43,7 +44,7 @@ public class CustomerServiceImpl implements CustomerService {
         checkEmail(customerToCreate);
         Customer fromDto = CustomerDto.from(customerToCreate);
         fromDto.setVerifyCode(RandomStringUtils.randomAlphabetic(5));
-        fromDto.setPassword(bcryptEncoder.encode(customerToCreate.getPassword()));
+        this.encodePassword(fromDto, customerToCreate.getPassword());
         fromDto.removeAllAuthorities();
         fromDto.addAuthority(AuthorityValues.CUSTOMER);
         created = customerRepository.save(fromDto);
@@ -57,7 +58,7 @@ public class CustomerServiceImpl implements CustomerService {
         checkEmail(customerToCreate);
         Customer fromDto = CustomerDto.from(customerToCreate);
         fromDto.setVerifyCode(RandomStringUtils.randomAlphabetic(5));
-        fromDto.setPassword(bcryptEncoder.encode(customerToCreate.getPassword()));
+        this.encodePassword(fromDto, customerToCreate.getPassword());
         fromDto.addAuthority(AuthorityValues.ADMIN);
         created = customerRepository.save(fromDto);
         return created;
@@ -111,12 +112,33 @@ public class CustomerServiceImpl implements CustomerService {
     }
 
     @Override
-    public Optional<Customer> generateResetPasswordCode(Long customerId) {
-        return Optional.empty();
+    @Transactional
+    public Optional<Customer> generateResetPasswordCode(String email) {
+        return customerRepository.findByEmail(email)
+                .map(customer -> {
+                    customer.setResetPasswordCode(UUID.randomUUID());
+                    return customerRepository.save(customer);
+                });
     }
 
     @Override
-    public Optional<Customer> updatePassword(Long customerId, String resetPasswordCode, String password) {
-        return Optional.empty();
+    @Transactional
+    public Optional<Customer> updatePassword(Long customerId, UUID resetPasswordCode, String newPassword) {
+        return customerRepository.findByIdAndResetPasswordCode(customerId, resetPasswordCode)
+                .map(customer -> {
+                    customer.setResetPasswordCode(null);
+                    this.encodePassword(customer, newPassword);
+                    return customerRepository.save(customer);
+                });
+    }
+
+    @Override
+    public Customer encodePassword(Customer customer, String newPassword) {
+        return customer.setPassword(bcryptEncoder.encode(newPassword));
+    }
+
+    @Override
+    public boolean isPasswordMatches(CharSequence rawPassword, String encodedPassword) {
+        return bcryptEncoder.matches(rawPassword, encodedPassword);
     }
 }
