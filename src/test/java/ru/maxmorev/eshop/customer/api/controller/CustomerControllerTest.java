@@ -433,7 +433,7 @@ public class CustomerControllerTest {
     public void updatePassword() throws Exception {
         UpdatePasswordRequest updatePasswordRequest = new UpdatePasswordRequest()
                 .setNewPassword("newPassword")
-                .setCustomerId(15L)
+                .setCustomerEmail("test-error@titsonfire.store")
                 .setResetPasswordCode(UUID.fromString("f6d56466-b345-11eb-8529-0242ac130003"));
         mockMvc.perform(post("/customer/update-password")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -443,7 +443,6 @@ public class CustomerControllerTest {
                 .andExpect(jsonPath("$.id").isNumber())
                 .andExpect(jsonPath("$.resetPasswordCode", nullValue()))
                 .andExpect(jsonPath("$.password", notNullValue()))
-
         ;
     }
 

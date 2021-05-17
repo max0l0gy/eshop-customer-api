@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.maxmorev.eshop.customer.api.annotation.AuthorityValues;
 import ru.maxmorev.eshop.customer.api.entities.Customer;
 import ru.maxmorev.eshop.customer.api.entities.CustomerAuthority;
+import ru.maxmorev.eshop.customer.api.rest.request.UpdatePasswordRequest;
 import ru.maxmorev.eshop.customer.api.rest.response.CustomerDto;
 
 import javax.persistence.EntityManager;
@@ -220,14 +221,15 @@ public class CustomerServiceTest {
                     executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD),
     })
     public void updatePassword() {
-        Optional<Customer> customerBeforePasswordUpdate = customerService.findById(15L);
+        Optional<Customer> customerBeforePasswordUpdate = customerService.findByEmail("test-error@titsonfire.store");
         assertTrue(customerBeforePasswordUpdate.isPresent());
         assertNotNull(customerBeforePasswordUpdate.get().getResetPasswordCode());
         assertEquals("$2a$10$um0PcvHczmxeUEbR3vCBGuOvtNdgJffm72knavG/EFE7JDm9QBEha", customerBeforePasswordUpdate.get().getPassword());
         Optional<Customer> customerWithUpdatedPassword = customerService
-                .updatePassword(15L,
-                        UUID.fromString("f6d56466-b345-11eb-8529-0242ac130003"),
-                        "newPassword"
+                .updatePassword(new UpdatePasswordRequest()
+                                .setCustomerEmail("test-error@titsonfire.store")
+                        .setResetPasswordCode(UUID.fromString("f6d56466-b345-11eb-8529-0242ac130003"))
+                        .setNewPassword("newPassword")
                 );
         assertTrue(customerWithUpdatedPassword.isPresent());
         assertNull(customerWithUpdatedPassword.get().getResetPasswordCode());

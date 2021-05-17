@@ -102,15 +102,11 @@ public class CustomerController {
                                       @Valid UpdatePasswordRequest updatePasswordRequest,
                                       Locale locale) {
         return customerService
-                .updatePassword(
-                        updatePasswordRequest.getCustomerId(),
-                        updatePasswordRequest.getResetPasswordCode(),
-                        updatePasswordRequest.getNewPassword()
-                )
+                .updatePassword(updatePasswordRequest)
                 .map(CustomerDto::of)
                 .orElseThrow(() -> new UsernameNotFoundException(
                         messageSource.getMessage("customer.error.notFound",
-                                new Object[]{updatePasswordRequest.getCustomerId()}, locale)
+                                new Object[]{updatePasswordRequest.getCustomerEmail()}, locale)
                 ));
     }
 

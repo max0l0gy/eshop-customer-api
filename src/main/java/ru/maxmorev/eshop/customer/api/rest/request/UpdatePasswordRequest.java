@@ -15,7 +15,7 @@ public class UpdatePasswordRequest extends JsonMappedValue {
     @NotBlank
     private String newPassword;
     @NotNull
-    private Long customerId;
+    private String customerEmail;
     @NotNull
     private UUID resetPasswordCode;
 }
