@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.maxmorev.eshop.customer.api.annotation.AuthorityValues;
 import ru.maxmorev.eshop.customer.api.entities.Customer;
 import ru.maxmorev.eshop.customer.api.repository.CustomerRepository;
+import ru.maxmorev.eshop.customer.api.rest.request.UpdatePasswordRequest;
 import ru.maxmorev.eshop.customer.api.rest.response.CustomerDto;
 
 import java.util.Optional;
@@ -123,11 +124,12 @@ public class CustomerServiceImpl implements CustomerService {
 
     @Override
     @Transactional
-    public Optional<Customer> updatePassword(Long customerId, UUID resetPasswordCode, String newPassword) {
-        return customerRepository.findByIdAndResetPasswordCode(customerId, resetPasswordCode)
+    public Optional<Customer> updatePassword(UpdatePasswordRequest updatePasswordRequest) {
+        return customerRepository.findByEmailAndResetPasswordCode(
+                updatePasswordRequest.getCustomerEmail(), updatePasswordRequest.getResetPasswordCode())
                 .map(customer -> {
                     customer.setResetPasswordCode(null);
-                    this.encodePassword(customer, newPassword);
+                    this.encodePassword(customer, updatePasswordRequest.getNewPassword());
                     return customerRepository.save(customer);
                 });
     }

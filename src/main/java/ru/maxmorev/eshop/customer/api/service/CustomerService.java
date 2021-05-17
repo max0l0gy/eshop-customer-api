@@ -2,6 +2,7 @@ package ru.maxmorev.eshop.customer.api.service;
 
 
 import ru.maxmorev.eshop.customer.api.entities.Customer;
+import ru.maxmorev.eshop.customer.api.rest.request.UpdatePasswordRequest;
 import ru.maxmorev.eshop.customer.api.rest.response.CustomerDto;
 
 import java.util.Optional;
@@ -23,7 +24,7 @@ public interface CustomerService {
 
     Optional<Customer> generateResetPasswordCode(String email);
 
-    Optional<Customer> updatePassword(Long customerId, UUID resetPasswordCode, String newPassword);
+    Optional<Customer> updatePassword(UpdatePasswordRequest updatePasswordRequest);
 
     Customer encodePassword(Customer customer, String newPassword);
 
