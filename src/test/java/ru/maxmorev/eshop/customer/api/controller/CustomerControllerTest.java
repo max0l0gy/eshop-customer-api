@@ -418,6 +418,8 @@ public class CustomerControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").isNumber())
                 .andExpect(jsonPath("$.resetPasswordCode", notNullValue()))
+                .andExpect(jsonPath("$.resetPasswordCodeGeneratedTimestamp", notNullValue()))
+                .andExpect(jsonPath("$.currentTimestamp", notNullValue()))
         ;
     }
 

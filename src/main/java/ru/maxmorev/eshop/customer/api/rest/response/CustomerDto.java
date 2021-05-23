@@ -13,6 +13,8 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.UUID;
 
+import static ru.maxmorev.eshop.customer.api.DateUtil.getCurrentTimestampInMilli;
+
 @Data
 @Accessors(chain = true)
 public class CustomerDto {
@@ -52,6 +54,10 @@ public class CustomerDto {
 
     private UUID resetPasswordCode;
 
+    private Long resetPasswordCodeGeneratedTimestamp;
+
+    private Long currentTimestamp;
+
     private Collection<CustomerAuthority> authorities;
 
     public static CustomerDto of(Customer info){
@@ -66,10 +72,12 @@ public class CustomerDto {
                 .setVerified(info.getVerified())
                 .setShoppingCartId(info.getShoppingCartId())
                 .setResetPasswordCode(info.getResetPasswordCode())
+                .setResetPasswordCodeGeneratedTimestamp(info.getResetPasswordCodeGeneratedTimestamp())
                 .setPassword(info.getPassword())
                 .setVerifyCode(info.getVerifyCode())
                 .setDateOfCreation(info.getDateOfCreation())
                 .setAuthorities(( Collection<CustomerAuthority>)info.getAuthorities())
+                .setCurrentTimestamp(getCurrentTimestampInMilli())
                 ;
     }
     
@@ -85,6 +93,7 @@ public class CustomerDto {
                 .setVerified(customerDto.getVerified())
                 .setShoppingCartId(customerDto.getShoppingCartId())
                 .setResetPasswordCode(customerDto.getResetPasswordCode())
+                .setResetPasswordCodeGeneratedTimestamp(customerDto.getResetPasswordCodeGeneratedTimestamp())
                 .setPassword(customerDto.getPassword())
                 .setDateOfCreation(customerDto.getDateOfCreation())
                 .setVerifyCode(customerDto.getVerifyCode())
