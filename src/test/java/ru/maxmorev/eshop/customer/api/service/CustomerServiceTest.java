@@ -208,6 +208,7 @@ public class CustomerServiceTest {
         Optional<Customer> customerWithResetPassword = customerService.generateResetPasswordCode("test@titsonfire.store");
         assertTrue(customerWithResetPassword.isPresent());
         assertNotNull(customerWithResetPassword.get().getResetPasswordCode());
+        assertNotNull(customerWithResetPassword.get().getResetPasswordCodeGeneratedTimestamp());
     }
 
     @Test
