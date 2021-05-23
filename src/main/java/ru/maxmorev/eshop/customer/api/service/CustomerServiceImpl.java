@@ -16,8 +16,11 @@ import ru.maxmorev.eshop.customer.api.repository.CustomerRepository;
 import ru.maxmorev.eshop.customer.api.rest.request.UpdatePasswordRequest;
 import ru.maxmorev.eshop.customer.api.rest.response.CustomerDto;
 
+import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
+
+import static ru.maxmorev.eshop.customer.api.DateUtil.getCurrentTimestampInMilli;
 
 @Slf4j
 @Transactional
@@ -118,6 +121,7 @@ public class CustomerServiceImpl implements CustomerService {
         return customerRepository.findByEmail(email)
                 .map(customer -> {
                     customer.setResetPasswordCode(UUID.randomUUID());
+                    customer.setResetPasswordCodeGeneratedTimestamp(getCurrentTimestampInMilli());
                     return customerRepository.save(customer);
                 });
     }

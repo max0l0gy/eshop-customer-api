@@ -96,6 +96,9 @@ public class Customer implements UserDetails {
     @Column(name = "reset_password_code")
     private UUID resetPasswordCode;
 
+    @Column(name="reset_password_code_generated_timestamp")
+    private Long resetPasswordCodeGeneratedTimestamp;
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         Set<CustomerAuthority> authSet = new HashSet<>();
